@@ -134,7 +134,6 @@ def main():
         plt.close()
         
     else:
-        # using normalized data
         p_rate = np.zeros_like(c_rate)
         for i in range(c_rate.shape[0]):
             p_rate[i] = np.sum(c_rate[:i+1])  # cumulative contribution rate
