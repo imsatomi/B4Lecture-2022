@@ -157,12 +157,12 @@ def main():
     start = time.time()
 
     if args.init == 'random':
-        pi, mu, sigma = init_random(data, num_c)
         print('random')
+        pi, mu, sigma = init_random(data, num_c)
 
     elif args.init == 'kmeans':
         print('kmeans')
-        centroid = kmeans.k_means_plusplus(data, num_c)
+        centroid = kmeans.init_random(data, num_c)
         cluster, centroid = kmeans.k_means(data, num_c, centroid)
         cov = np.zeros((num_c, 2, 2))
         for i in range(num_c):
