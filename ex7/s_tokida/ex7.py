@@ -1,5 +1,6 @@
+import kmeans
 import argparse
-import py_compile
+import time
 import numpy as np
 import pandas as pd
 from scipy.stats import multivariate_normal
@@ -19,60 +20,6 @@ def init_random(data, num_c):
     sigma = np.array([np.eye(data.shape[1]) for i in range(num_c)])
 
     return pi, mu, sigma
-
-def k_means_plusplus(data, num_c):
-    """define initial centroids by kmeans++ algorithm
-    Args:
-        data (ndarray): imput data
-        num_c (int): number of clusters
-    Returns:
-        centroid (ndarray)
-    """
-    
-    centroid=np.zeros(data.shape[1] * num_c).reshape(num_c, data.shape[1])
-    centroid[0, :] = data[np.random.choice(range(data.shape[0]), 1)]
-    d = ((data - centroid[0]) ** 2).sum(axis = 1)
-    p = d / d.sum()
-    d_min = d
-
-    for k in range(1, num_c):
-        centroid[k, :] = data[np.random.choice(range(data.shape[0]), 1, p=p)]
-        d = ((data - centroid[k]) ** 2).sum(axis = 1)
-        d_min = np.minimum(d_min, d)
-        p = d_min / d_min.sum()
-
-    return centroid
-
-def k_means(data, num_c, centroid):
-    """clustering by kmeans method
-    Args:
-        data (ndarray): imput data
-        num_c (int): number of clusters
-    Returns:
-        cluster (ndarray)
-        centroid (ndarray) 
-    """
-
-    distance = np.zeros((num_c, data.shape[0]))
-    cluster = np.zeros(data.shape[0])
-
-    count = 0
-    max_iter = 100
-    
-    while(count < max_iter):
-        distance = np.sum((centroid[:,np.newaxis,:] - data[np.newaxis,:,:]) ** 2, axis = -1)
-
-        distance = np.array([np.sum((centroid[i] - data) ** 2, axis = 1) for i in range(num_c)])
-        cluster = np.argmin(distance, axis = 0)
-        
-        centroid_bef = centroid
-        centroid = np.array([np.mean(data[cluster == i], axis = 0) for i in range(num_c)])
-        count += 1
-        if (centroid_bef == centroid).all():
-            # print('count:', count)
-            break
-    
-    return cluster, centroid
 
 def gaussian(data, mu, sigma):
     """calculate multi-dimensional Gaussian distribution of one data point
@@ -192,7 +139,6 @@ def em_algorithm(data, pi, mu, sigma, epsilon=1e-3):
     
     return likelihoods, pi, mu, sigma
 
-
 def main():
     parser = argparse.ArgumentParser()
 
@@ -208,15 +154,27 @@ def main():
     data = pd.read_csv(f'../data/{filepath}', header = None).values
     # data = pd.read_csv(f'data/{filepath}', header = None).values
     # print('data.shape', data.shape)
+    start = time.time()
 
     if args.init == 'random':
         pi, mu, sigma = init_random(data, num_c)
         print('random')
 
+    elif args.init == 'kmeans':
+        print('kmeans')
+        centroid = kmeans.k_means_plusplus(data, num_c)
+        cluster, centroid = kmeans.k_means(data, num_c, centroid)
+        cov = np.zeros((num_c, 2, 2))
+        for i in range(num_c):
+            cov[i] = np.cov(data[np.where(cluster == i)].T)
+        pi = np.full(num_c, 1 / num_c)
+        mu = centroid 
+        sigma = cov
+
     elif args.init == 'kmeans++':
         print('kmeans++')
-        centroid = k_means_plusplus(data, num_c)
-        cluster, centroid = k_means(data, num_c, centroid)
+        centroid = kmeans.k_means_plusplus(data, num_c)
+        cluster, centroid = kmeans.k_means(data, num_c, centroid)
         cov = np.zeros((num_c, 2, 2))
         for i in range(num_c):
             cov[i] = np.cov(data[np.where(cluster == i)].T)
@@ -226,12 +184,16 @@ def main():
     
     likelihoods, pi, mu, sigma = em_algorithm(data, pi, mu, sigma)
 
+    # time
+    calc_time = time.time() - start
+    print(f"calc_time({args.init}): {calc_time:.5f}")
+
     colors = ['y', 'm', 'c', 'r', 'g', 'b']
 
     if data.shape[1] == 1:
         fig, ax = plt.subplots(figsize = (7,6))
         ax.set(xlabel = 'x', ylabel = 'probability density', title = f'{filename} K={num_c}')
-        
+
         pos = np.linspace(np.min(data) - 1, np.max(data) + 1, 100)
         z = np.zeros(100)
         for k in range(num_c):
@@ -242,10 +204,17 @@ def main():
         ax.scatter(mu, np.zeros(num_c), marker = '*', s=100, c = 'k', label = 'Centroid' )
         plt.legend()
         plt.tight_layout()
-        plt.savefig('fig/' + f'{filename}_k{num_c}_{args.init}.png')
+        # plt.savefig('fig/' + f'{filename}_k{num_c}_{args.init}.png')
         plt.show()
         plt.close()
 
+        # plot likelihood
+        fig, ax = plt.subplots()
+        ax.set(xlabel = 'Iteration', ylabel = 'Log Likelihood', title = f'{filename} likelihood')
+        
+        plt.plot(np.arange(0, len(likelihoods), 1), likelihoods)
+        # plt.savefig('fig/' + f'{filename}_lh.png')
+        plt.show()
 
     if data.shape[1] == 2:
 
@@ -253,7 +222,7 @@ def main():
         x2 = np.linspace(np.min(data[:, 1]) - 1, np.max(data[:, 1]) + 1, 100)
         x1, x2 = np.meshgrid(x1, x2)
         pos = np.dstack((x1, x2))
-        
+
         prob = np.array([mix_gaussian(x_pos, pi, mu, sigma)[0] for x_pos in pos])
     
         fig, ax = plt.subplots(figsize = (7,6))
@@ -265,9 +234,19 @@ def main():
 
         plt.legend()
         plt.tight_layout()
-        plt.savefig('fig/' + f'{filename}_k{num_c}_{args.init}.png')
+        # plt.savefig('fig/' + f'{filename}_k{num_c}_{args.init}.png')
         plt.show()
         plt.close()
+
+        # plot likelihood
+        fig, ax = plt.subplots()
+        ax.set(xlabel = 'Iteration', ylabel = 'Log Likelihood', title = f'{filename} likelihood')
+
+        plt.plot(np.arange(0, len(likelihoods), 1), likelihoods)
+        plt.savefig('fig/' + f'{filename}_lh.png')
+        plt.tight_layout()
+        plt.show()
+
 
 if __name__ == "__main__":
     main()
