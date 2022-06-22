@@ -1,10 +1,13 @@
-import kmeans
 import argparse
 import time
+
 import numpy as np
 import pandas as pd
-from scipy.stats import multivariate_normal
 from matplotlib import pyplot as plt
+from scipy.stats import multivariate_normal
+
+import kmeans
+
 
 def init_random(data, num_c):
     """define initial clusters randomly
@@ -21,6 +24,7 @@ def init_random(data, num_c):
 
     return pi, mu, sigma
 
+
 def gaussian(data, mu, sigma):
     """calculate multi-dimensional Gaussian distribution of one data point
     Args:
@@ -35,17 +39,16 @@ def gaussian(data, mu, sigma):
     K = mu.shape[0]  # num_c
     diff_data = np.array([data - mu[i] for i in range(K)])
 
-    inexp = (
-        diff_data @ np.linalg.inv(sigma) @ diff_data.transpose(0, 2, 1)
-    )
+    inexp = diff_data @ np.linalg.inv(sigma) @ diff_data.transpose(0, 2, 1)
     inexp = np.diagonal(inexp, axis1=1, axis2=2)
 
     # numerator
     nume = np.exp(-inexp / 2)
     # denominator
-    deno = np.sqrt(((2*np.pi)**D)* np.linalg.det(sigma)).reshape(-1, 1)
+    deno = np.sqrt(((2 * np.pi) ** D) * np.linalg.det(sigma)).reshape(-1, 1)
 
     return nume / deno
+
 
 def mix_gaussian(data, pi, mu, sigma):
     """calculate GMM
@@ -61,10 +64,11 @@ def mix_gaussian(data, pi, mu, sigma):
 
     w_gauss = gaussian(data, mu, sigma) * pi.reshape(-1, 1)
     m_gauss = np.sum(w_gauss, axis=0)
-    
+
     return m_gauss, w_gauss
 
-def log_likelihood(m_gaussian, log = True):
+
+def log_likelihood(m_gaussian, log=True):
     """calculate log-likelihood
     Args:
         m_gaussian (ndarray):probability density of GMM
@@ -78,6 +82,7 @@ def log_likelihood(m_gaussian, log = True):
         likelihood = np.prod(m_gaussian)
 
     return likelihood
+
 
 def em_algorithm(data, pi, mu, sigma, epsilon=1e-3):
     """EM algorithm
@@ -104,7 +109,7 @@ def em_algorithm(data, pi, mu, sigma, epsilon=1e-3):
     count = 0
     max_iter = 300
 
-    while (count < max_iter):
+    while count < max_iter:
         # E step
         burden_rate = w_gauss / m_gauss
 
@@ -132,88 +137,99 @@ def em_algorithm(data, pi, mu, sigma, epsilon=1e-3):
         likelihoods.append(likelihood)
         count += 1
 
-        if (likelihood - pre_likelihood < epsilon):
-            print('count:', count)
+        if likelihood - pre_likelihood < epsilon:
+            print("count:", count)
 
             return likelihoods, pi, mu, sigma
-    
+
     return likelihoods, pi, mu, sigma
+
 
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('filepath', type=str, help='csv file name')
-    parser.add_argument('c', type=int, help='number of clusters')
-    parser.add_argument('--init', type=str, default='random', help='algorithm to define initial centroids[random, kmeans++]')
+    parser.add_argument("filepath", type=str, help="csv file name")
+    parser.add_argument("c", type=int, help="number of clusters")
+    parser.add_argument("--init", choices=["random", "kmeans", "kmeans++"])
     args = parser.parse_args()
 
     filepath = args.filepath
-    filename = filepath.split('.')[0]
+    filename = filepath.split(".")[0]
     num_c = args.c
 
-    data = pd.read_csv(f'../data/{filepath}', header = None).values
+    data = pd.read_csv(f"../data/{filepath}", header=None).values
     # data = pd.read_csv(f'data/{filepath}', header = None).values
     # print('data.shape', data.shape)
     start = time.time()
 
-    if args.init == 'random':
-        print('random')
+    if args.init == "random":
+        print("random")
         pi, mu, sigma = init_random(data, num_c)
 
-    elif args.init == 'kmeans':
-        print('kmeans')
+    elif args.init == "kmeans":
+        print("kmeans")
         centroid = kmeans.init_random(data, num_c)
         cluster, centroid = kmeans.k_means(data, num_c, centroid)
         cov = np.zeros((num_c, 2, 2))
         for i in range(num_c):
             cov[i] = np.cov(data[np.where(cluster == i)].T)
         pi = np.full(num_c, 1 / num_c)
-        mu = centroid 
+        mu = centroid
         sigma = cov
 
-    elif args.init == 'kmeans++':
-        print('kmeans++')
+    elif args.init == "kmeans++":
+        print("kmeans++")
         centroid = kmeans.k_means_plusplus(data, num_c)
         cluster, centroid = kmeans.k_means(data, num_c, centroid)
         cov = np.zeros((num_c, 2, 2))
         for i in range(num_c):
             cov[i] = np.cov(data[np.where(cluster == i)].T)
         pi = np.full(num_c, 1 / num_c)
-        mu = centroid 
+        mu = centroid
         sigma = cov
-    
+
     likelihoods, pi, mu, sigma = em_algorithm(data, pi, mu, sigma)
 
     # time
     calc_time = time.time() - start
     print(f"calc_time({args.init}): {calc_time:.5f}")
 
-    colors = ['y', 'm', 'c', 'r', 'g', 'b']
-
     if data.shape[1] == 1:
-        fig, ax = plt.subplots(figsize = (7,6))
-        ax.set(xlabel = 'x', ylabel = 'probability density', title = f'{filename} K={num_c}')
+        fig, ax = plt.subplots(figsize=(7, 6))
+        ax.set(
+            xlabel="x",
+            ylabel="probability density",
+            title=f"{filename} K={num_c} {args.init}",
+        )
 
         pos = np.linspace(np.min(data) - 1, np.max(data) + 1, 100)
         z = np.zeros(100)
         for k in range(num_c):
             z += pi[k] * multivariate_normal.pdf(pos, mu[k], sigma[k])
 
-        ax.scatter(data, np.zeros_like(data), edgecolors='blueviolet', facecolor='None', label='Observed data')
-        plt.plot(pos, z, c='orange', label='GMM')
-        ax.scatter(mu, np.zeros(num_c), marker = '*', s=100, c = 'k', label = 'Centroid' )
+        ax.scatter(
+            data,
+            np.zeros_like(data),
+            edgecolors="blueviolet",
+            facecolor="None",
+            label="Observed data",
+        )
+        plt.plot(pos, z, c="orange", label="GMM")
+        ax.scatter(mu, np.zeros(num_c), marker="*", s=100, c="k", label="Centroid")
         plt.legend()
         plt.tight_layout()
-        # plt.savefig('fig/' + f'{filename}_k{num_c}_{args.init}.png')
+        plt.savefig("fig/" + f"{filename}_k{num_c}_{args.init}.png")
         plt.show()
         plt.close()
 
         # plot likelihood
         fig, ax = plt.subplots()
-        ax.set(xlabel = 'Iteration', ylabel = 'Log Likelihood', title = f'{filename} likelihood')
-        
+        ax.set(
+            xlabel="Iteration", ylabel="Log Likelihood", title=f"{filename} likelihood"
+        )
+
         plt.plot(np.arange(0, len(likelihoods), 1), likelihoods)
-        # plt.savefig('fig/' + f'{filename}_lh.png')
+        plt.savefig("fig/" + f"{filename}_k{num_c}_{args.init}lh.png")
         plt.show()
 
     if data.shape[1] == 2:
@@ -224,26 +240,36 @@ def main():
         pos = np.dstack((x1, x2))
 
         prob = np.array([mix_gaussian(x_pos, pi, mu, sigma)[0] for x_pos in pos])
-    
-        fig, ax = plt.subplots(figsize = (7,6))
-        ax.set(xlabel = '$x_1$', ylabel = '$x_2$', title = f'{filename} K={num_c}')
 
-        ax.scatter(data[:, 0], data[:, 1], edgecolors='blueviolet', facecolor='None', label = 'Observed data')
-        ax.scatter(mu[:, 0], mu[:, 1], marker = '*', s=100, c = 'k', label = 'Centroid' )
-        plt.contour(x1, x2, prob, cmap = 'rainbow')
+        fig, ax = plt.subplots(figsize=(7, 6))
+        ax.set(
+            xlabel="$x_1$", ylabel="$x_2$", title=f"{filename} K={num_c} {args.init}"
+        )
+
+        ax.scatter(
+            data[:, 0],
+            data[:, 1],
+            edgecolors="blueviolet",
+            facecolor="None",
+            label="Observed data",
+        )
+        ax.scatter(mu[:, 0], mu[:, 1], marker="*", s=100, c="k", label="Centroid")
+        plt.contour(x1, x2, prob, cmap="rainbow")
 
         plt.legend()
         plt.tight_layout()
-        # plt.savefig('fig/' + f'{filename}_k{num_c}_{args.init}.png')
+        plt.savefig("fig/" + f"{filename}_k{num_c}_{args.init}.png")
         plt.show()
         plt.close()
 
         # plot likelihood
         fig, ax = plt.subplots()
-        ax.set(xlabel = 'Iteration', ylabel = 'Log Likelihood', title = f'{filename} likelihood')
+        ax.set(
+            xlabel="Iteration", ylabel="Log Likelihood", title=f"{filename} likelihood"
+        )
 
         plt.plot(np.arange(0, len(likelihoods), 1), likelihoods)
-        plt.savefig('fig/' + f'{filename}_lh.png')
+        plt.savefig("fig/" + f"{filename}_k{num_c}_{args.init}lh.png")
         plt.tight_layout()
         plt.show()
 
