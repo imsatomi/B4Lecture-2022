@@ -1,0 +1,102 @@
+2022-07-08 23:15:51.936504: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-07-08 23:15:52.533780: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1532] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 10417 MB memory:  -> device: 0, name: NVIDIA GeForce GTX 1080 Ti, pci bus id: 0000:06:00.0, compute capability: 6.1
+/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/optimizers/optimizer_v2/adam.py:110: UserWarning: The `lr` argument is deprecated, use `learning_rate` instead.
+  super(Adam, self).__init__(name, **kwargs)
+WARNING:tensorflow:Model was constructed with shape (None, 60) for input KerasTensor(type_spec=TensorSpec(shape=(None, 60), dtype=tf.float32, name='dense_input'), name='dense_input', description="created by layer 'dense_input'"), but it was called on an input with incompatible shape (None, 60, 9).
+duration of training data
+max 0.8282086167800453
+min 0.05206349206349206
+mean 0.15240362811791386
+file loaded: 290.7975506782532
+duration of test data
+max 0.37555555555555553
+min 0.0707482993197279
+mean 0.15217687074829933
+feature_xtraction: 305.3203580379486
+Traceback (most recent call last):
+  File "main.py", line 203, in <module>
+    main()
+  File "main.py", line 187, in main
+    cross_validation(X, Y)
+  File "main.py", line 57, in cross_validation
+    model.fit(X[train], y=Y[train],
+  File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/utils/traceback_utils.py", line 67, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "/tmp/__autograph_generated_filezxxhb7j1.py", line 15, in tf__train_function
+    retval_ = ag__.converted_call(ag__.ld(step_function), (ag__.ld(self), ag__.ld(iterator)), None, fscope)
+ValueError: in user code:
+
+    File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/engine/training.py", line 1051, in train_function  *
+        return step_function(self, iterator)
+    File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/engine/training.py", line 1040, in step_function  **
+        outputs = model.distribute_strategy.run(run_step, args=(data,))
+    File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/engine/training.py", line 1030, in run_step  **
+        outputs = model.train_step(data)
+    File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/engine/training.py", line 889, in train_step
+        y_pred = self(x, training=True)
+    File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/utils/traceback_utils.py", line 67, in error_handler
+        raise e.with_traceback(filtered_tb) from None
+    File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/engine/input_spec.py", line 248, in assert_input_compatibility
+        raise ValueError(
+
+    ValueError: Exception encountered when calling layer "sequential" (type Sequential).
+    
+    Input 0 of layer "dense" is incompatible with the layer: expected axis -1 of input shape to have value 60, but received input with shape (None, 60, 9)
+    
+    Call arguments received by layer "sequential" (type Sequential):
+      • inputs=tf.Tensor(shape=(None, 60, 9), dtype=float32)
+      • training=True
+      • mask=None
+
+2022-07-08 23:17:29.356320: I tensorflow/core/platform/cpu_feature_guard.cc:193] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-07-08 23:17:29.863342: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1532] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 9651 MB memory:  -> device: 0, name: NVIDIA GeForce RTX 2080 Ti, pci bus id: 0000:0a:00.0, compute capability: 7.5
+/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/optimizers/optimizer_v2/adam.py:110: UserWarning: The `lr` argument is deprecated, use `learning_rate` instead.
+  super(Adam, self).__init__(name, **kwargs)
+WARNING:tensorflow:Model was constructed with shape (None, 60) for input KerasTensor(type_spec=TensorSpec(shape=(None, 60), dtype=tf.float32, name='dense_input'), name='dense_input', description="created by layer 'dense_input'"), but it was called on an input with incompatible shape (None, 60, 9).
+duration of training data
+max 0.8282086167800453
+min 0.05206349206349206
+mean 0.15240362811791386
+file loaded: 281.22129678726196
+duration of test data
+max 0.37555555555555553
+min 0.0707482993197279
+mean 0.15217687074829933
+feature_xtraction: 294.9858675003052
+Traceback (most recent call last):
+  File "main.py", line 203, in <module>
+    main()
+  File "main.py", line 187, in main
+    cross_validation(X, Y)
+  File "main.py", line 57, in cross_validation
+    model.fit(X[train], y=Y[train],
+  File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/utils/traceback_utils.py", line 67, in error_handler
+    raise e.with_traceback(filtered_tb) from None
+  File "/tmp/__autograph_generated_filebapt4opw.py", line 15, in tf__train_function
+    retval_ = ag__.converted_call(ag__.ld(step_function), (ag__.ld(self), ag__.ld(iterator)), None, fscope)
+ValueError: in user code:
+
+    File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/engine/training.py", line 1051, in train_function  *
+        return step_function(self, iterator)
+    File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/engine/training.py", line 1040, in step_function  **
+        outputs = model.distribute_strategy.run(run_step, args=(data,))
+    File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/engine/training.py", line 1030, in run_step  **
+        outputs = model.train_step(data)
+    File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/engine/training.py", line 889, in train_step
+        y_pred = self(x, training=True)
+    File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/utils/traceback_utils.py", line 67, in error_handler
+        raise e.with_traceback(filtered_tb) from None
+    File "/home/s_tokida/workspace5/venv/envs/ex9/lib/python3.8/site-packages/keras/engine/input_spec.py", line 248, in assert_input_compatibility
+        raise ValueError(
+
+    ValueError: Exception encountered when calling layer "sequential" (type Sequential).
+    
+    Input 0 of layer "dense" is incompatible with the layer: expected axis -1 of input shape to have value 60, but received input with shape (None, 60, 9)
+    
+    Call arguments received by layer "sequential" (type Sequential):
+      • inputs=tf.Tensor(shape=(None, 60, 9), dtype=float32)
+      • training=True
+      • mask=None
+
