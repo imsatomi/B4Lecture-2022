@@ -11,22 +11,19 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 
 
 # 訓練用データセットを取得する関数
-def load_data(data, DATA_SIZE, SAMPLERATE):  # 音声の秒数記録, 0でpadding
+def load_data(data, DATA_SIZE, SAMPLERATE):
     duration = np.zeros(len(data))
     wav_train = np.zeros((len(data), DATA_SIZE))
     label_train = to_categorical(data["label"])  # one-hot
 
     for i, row in data.iterrows():
-        # print(row[0])  # dataset/train/jackson_0.wav
-        y = librosa.load(f"../{row[0]}", sr=SAMPLERATE)[0]  # row[0]=row["path"]
+        y = librosa.load(f"../{row[0]}", sr=SAMPLERATE)[0]
         duration[i] = librosa.get_duration(y=y)  # 秒数取得->箱ひげ図
         # zero padding
         if (len(y) > DATA_SIZE):
             wav_train[i] = y[0:DATA_SIZE]
         else:
             wav_train[i, 0:len(y)] = y
-    
-    # print("wav_train.shape: ", wav_train.shape)
 
     return wav_train, label_train, duration
 
@@ -36,15 +33,7 @@ def preEmphasis(signal, p=0.97):  # MFCCの前処理
     return sp.signal.lfilter([1.0, -p], 1, signal)
 
 def feature_mfcc(wav):
-    """
-    wavファイルのリストから特徴抽出を行いリストで返す
-    扱う特徴量はMFCC13次元の平均（0次は含めない）
-    Args:
-        path_list: 特徴抽出するファイルのパスリスト
-    Returns:
-        features: 特徴量
-    """
-
+    
     pre_wav = [preEmphasis(y) for y in wav]
 
     mfcc = np.array(list(map(lambda x: librosa.feature.mfcc(y=x, sr=8000, n_mfcc=30), pre_wav)))

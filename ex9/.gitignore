@@ -3,3 +3,4 @@ keras_model
 result.csv
 test_truth.csv
 make_label.py
+ex9_log.txt

@@ -32,7 +32,7 @@ class ModelMaker:
         # MLP model
         # 隠れ層1  -ノード数:256 -活性化関数:relu -入力:X.shape[1:]次元 -ドロップアウト比率0.25
         # 最初の層では想定する入力データshapeを入力する必要あり
-        print("X.shape", input_shape)  # X.shape (2700, 30, 2, 9)
+        print("X.shape", input_shape)
 
         model.add(Dense(256, activation="relu", input_shape=input_shape))
         model.add(Dropout(0.25))
@@ -85,17 +85,14 @@ class ModelMaker:
         # x_validation.shape (540, 60, 9)
         # lab_train.shape (2160, 10)
         # lab_validation.shape (540, 10)
-        # ValueError: Shapes (None, 10) and (None, 60, 10) are incompatible
 
-        # 次元調整
+        # 次元調整  # TODO:
         # mfcc_train = np.reshape(mfcc_train, (2700, 30, 2, 9))
         # x_train = x_train[:, :, :, np.newaxis]
-        print("次元調整", x_train.shape)
+        # print("次元調整", x_train.shape)
 
         # モデルを定義
         model = self.define_model(x_train.shape[1:])
-
-        # (データ数, データ種類数, 説明変数)
 
         # 訓練の実行
         early_stopping = EarlyStopping(monitor='val_loss', patience=2)
