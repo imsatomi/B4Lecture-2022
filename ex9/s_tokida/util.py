@@ -47,7 +47,7 @@ def preEmphasis(signal, p=0.97):  # MFCCの前処理
     return sp.signal.lfilter([1.0, -p], 1, signal)
 
 
-def feature_mfcc(wav, n_mfcc=13):
+def feature_mfcc(wav, n_mfcc=20):
     """mfcc
     Args:
         wav(ndarray): wav data
@@ -71,14 +71,15 @@ def feature_mfcc(wav, n_mfcc=13):
     # print("features", features.shape)
 
     # 保存
-    if os.path.isfile("keras_model/my_mfcc.csv") == False:
+    if os.path.isfile(f"keras_model/my_mfcc_{n_mfcc}.csv") == False:
         df = pd.DataFrame(features)
-        df.to_csv("keras_model/my_mfcc.csv", index=False, header=False)
+        df.to_csv(f"keras_model/my_mfcc_{n_mfcc}.csv", index=False, header=False)
+        print("csvFile作った", n_mfcc)
 
     return features
 
 
-def plot(history, epoch):
+def plot(history, epochs, n_mfcc):
     """plot learning process
     Args:
         history(ndarray): predicted values
@@ -89,25 +90,25 @@ def plot(history, epoch):
 
     # 学習過程の可視化
     print("len", len(history["accuracy"]))
-    epoch = len(history["accuracy"])
-    plt.plot(range(1, epoch + 1), history["accuracy"], label="training", linestyle="--")
-    plt.plot(range(1, epoch + 1), history["val_accuracy"], label="validation")
+    e = len(history["accuracy"])
+    plt.plot(range(1, e + 1), history["accuracy"], label="training", linestyle="--")
+    plt.plot(range(1, e + 1), history["val_accuracy"], label="validation")
     plt.xlabel("epochs")
     plt.ylabel("accuracy")
     plt.legend()
-    plt.savefig("figs/process_accuracy.png")
+    plt.savefig(f"figs/accuracy_e{epochs}_n{n_mfcc}.png")
     plt.close()
 
-    plt.plot(range(1, epoch + 1), history["loss"], label="training", linestyle="--")
-    plt.plot(range(1, epoch + 1), history["val_loss"], label="validation")
+    plt.plot(range(1, e + 1), history["loss"], label="training", linestyle="--")
+    plt.plot(range(1, e + 1), history["val_loss"], label="validation")
     plt.xlabel("epochs")
     plt.ylabel("loss")
     plt.legend()
-    plt.savefig("figs/process_loss.png")
+    plt.savefig(f"figs/loss_e{epochs}_n{n_mfcc}.png")
     plt.close()
 
 
-def plot_confusion_matrix(predict, ground_truth):
+def plot_confusion_matrix(predict, ground_truth, epochs, n_mfcc):
     """plot confusion matrix
     Args:
         predict(ndarray): predicted values
@@ -126,5 +127,5 @@ def plot_confusion_matrix(predict, ground_truth):
     plt.ylabel("Predicted")
     plt.xlabel("Ground truth")
     plt.tight_layout()
-    plt.savefig("figs/cm.png")
+    plt.savefig(f"figs/cm_e{epochs}_n{n_mfcc}.png")
     plt.close()

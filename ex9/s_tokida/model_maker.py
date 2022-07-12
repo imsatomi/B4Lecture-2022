@@ -23,6 +23,7 @@ class ModelMaker:
         batch_size,
         epochs,
         valid_rate,
+        n_mfcc,
     ):
         self.samplerate = samplerate
         self.info_file = info_file
@@ -32,15 +33,16 @@ class ModelMaker:
         self.batch_size = batch_size
         self.epochs = epochs
         self.valid_rate = valid_rate
+        self.n_mfcc = n_mfcc
 
     def define_model(self, input_shape):
         model = Sequential()  # MLP model
 
         # 隠れ層1
-        model.add(Dense(256, activation="relu", input_dim=input_shape))
+        model.add(Dense(256, activation="tanh", input_dim=input_shape))
         model.add(Dropout(0.25))
         # 隠れ層2
-        model.add(Dense(256, activation="relu"))
+        model.add(Dense(256, activation="tanh"))
         model.add(Dropout(0.25))
         # 出力層
         model.add(Dense(10, activation="softmax"))
@@ -67,10 +69,11 @@ class ModelMaker:
         # print("mean", np.median(duration_train))
 
         # feature extraction
-        if os.path.isfile("keras_model/my_mfcc.csv"):
-            mfcc_train = pd.read_csv("keras_model/my_mfcc.csv", header=None).values
-            print("read_csvしたよ", mfcc_train.shape)
-
+        if os.path.isfile(f"keras_model/my_mfcc_{self.n_mfcc}.csv"):
+            mfcc_train = pd.read_csv(
+                f"keras_model/my_mfcc_{self.n_mfcc}.csv", header=None
+            ).values
+            print("read_csvしたよ", self.n_mfcc)
         else:
             mfcc_train = util.feature_mfcc(wav_train)
             print("read_csvしてないよ", mfcc_train.shape)  # (2700, 26)
@@ -89,18 +92,13 @@ class ModelMaker:
         # fit model
         early_stopping = EarlyStopping(monitor="val_loss", patience=2)
 
-        # callback あり
-        # history = model.fit(
-        #     x_train, lab_train, batch_size=self.batch_size, shuffle=True,
-        #     epochs=self.epochs, callbacks=[early_stopping], validation_data=(x_validation, lab_validation))
-
-        # callback なし
         history = model.fit(
             x_train,
             lab_train,
             batch_size=self.batch_size,
             shuffle=True,
             epochs=self.epochs,
+            callbacks=[early_stopping],
             validation_data=(x_validation, lab_validation),
         )
 
@@ -123,7 +121,7 @@ class ModelMaker:
         if "acc" in history:
             history["accuracy"] = history.pop("acc")
             history["val_accuracy"] = history.pop("val_acc")
-        util.plot(history, self.epochs)
+        util.plot(history, self.epochs, self.n_mfcc)
         print("val_loss: %f" % history["val_loss"][-1])
 
         # evaluate with test data (accuracy & cm)
@@ -138,4 +136,6 @@ class ModelMaker:
             predicted_values = np.argmax(predict, axis=1)
             print("test value", predicted_values)
 
-            util.plot_confusion_matrix(predicted_values, label_test)
+            util.plot_confusion_matrix(
+                predicted_values, label_test, self.epochs, self.n_mfcc
+            )
